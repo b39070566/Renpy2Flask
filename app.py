@@ -240,24 +240,7 @@ def callback():
                     'https://obs.line-scdn.net/0hMr3CcEnQEl0OOgaykLhtCjZsHiw9XAhULAxcaSw7Hj8hFlZYYQxBPi5uSHFwXgIMLgsObCpqH20gCQULMw/w1200',
                 ]
                 selected_image_url = random.choice(image_urls)
-        if not isinstance(event, MessageEvent):
-            continue
-        if not isinstance(event.message, TextMessage):
-            continue
-
-                line_bot_api.reply_message(
-                    event.reply_token,
-                    ImageSendMessage(original_content_url=selected_image_url,
-                    preview_image_url=selected_image_url))
-            else:
-                line_bot_api.reply_message(
-                    event.reply_token,
-                    TextSendMessage(text=msg))
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text=event.message.text)
-        )
-
+                
     return 'OK'
 
 

@@ -46,20 +46,17 @@ parser = WebhookParser(channel_secret)
 
 @app.route("/callback", methods=['POST'])
 def callback():
-    global play_nums, ranums  # Use the global keyword
-
     signature = request.headers['X-Line-Signature']
 
-    # get request body as text
-    body = request.get_data(as_text=True)
-    app.logger.info("Request body: " + body)
+    if request.method == 'POST':
+        signature = request.META['HTTP_X_LINE_SIGNATURE']
+        body = request.body.decode('utf-8')
 
-        try:
-            events = parser.parse(body, signature)
-        except InvalidSignatureError:
-            return HttpResponseForbidden()
-        except LineBotApiError:
-            return HttpResponseBadRequest()
+    # parse webhook body
+    try:
+        events = parser.parse(body, signature)
+    except InvalidSignatureError:
+        abort(400)
 
     # if event is MessageEvent and message is TextMessage, then echo text
     for event in events:

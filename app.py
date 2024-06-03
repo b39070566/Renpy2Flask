@@ -17,6 +17,8 @@ import os
 import sys
 from argparse import ArgumentParser
 
+import phoentic as ph
+
 from flask import Flask, request, abort
 from linebot import (
     LineBotApi, WebhookParser
@@ -239,6 +241,9 @@ def callback():
                     'https://obs.line-scdn.net/0hMr3CcEnQEl0OOgaykLhtCjZsHiw9XAhULAxcaSw7Hj8hFlZYYQxBPi5uSHFwXgIMLgsObCpqH20gCQULMw/w1200',
                 ]
                 selected_image_url = random.choice(image_urls)
+    return 'OK'
+
+
 
 
 if __name__ == "__main__":

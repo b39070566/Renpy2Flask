@@ -23,6 +23,13 @@ from flask import Flask, request, abort
 from linebot import (
     LineBotApi, WebhookParser
 )
+
+import random
+
+from linebot import LineBotApi, WebhookParser
+from linebot.exceptions import InvalidSignatureError, LineBotApiError
+from linebot.models import MessageEvent, TextSendMessage, StickerSendMessage, ImageSendMessage, AudioSendMessage, VideoSendMessage
+
 from linebot.exceptions import (
     InvalidSignatureError
 )
@@ -169,6 +176,7 @@ def getInvoice():
 
 @app.route("/callback", methods=['POST'])
 def callback():
+    global play_nums, ranums
     signature = request.headers['X-Line-Signature']
 
     # get request body as text

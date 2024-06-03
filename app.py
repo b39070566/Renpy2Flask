@@ -171,16 +171,17 @@ def getInvoice():
 def callback():
     global play_nums, ranums  # Use the global keyword
 
-    if request.method == 'POST':
-        signature = request.META['HTTP_X_LINE_SIGNATURE']
-        body = request.body.decode('utf-8')
+    signature = request.headers['X-Line-Signature']
 
-        try:
-            events = parser.parse(body, signature)
-        except InvalidSignatureError:
-            return HttpResponseForbidden()
-        except LineBotApiError:
-            return HttpResponseBadRequest()
+    # get request body as text
+    body = request.get_data(as_text=True)
+    app.logger.info("Request body: " + body)
+
+    # parse webhook body
+    try:
+        events = parser.parse(body, signature)
+    except InvalidSignatureError:
+        abort(400)
 
         for event in events:
             # 若有訊息事件

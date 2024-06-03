@@ -12,17 +12,14 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
-
 import os
 import sys
 from argparse import ArgumentParser
 
-import phoentic as ph
-
 from flask import Flask, request, abort
-from linebot import (
-    LineBotApi, WebhookParser
-)
+from linebot import LineBotApi, WebhookParser
+from linebot.exceptions import InvalidSignatureError
+from linebot.models import MessageEvent, TextMessage, TextSendMessage
 
 import random
 
@@ -30,12 +27,8 @@ from linebot import LineBotApi, WebhookParser
 from linebot.exceptions import InvalidSignatureError, LineBotApiError
 from linebot.models import MessageEvent, TextSendMessage, StickerSendMessage, ImageSendMessage, AudioSendMessage, VideoSendMessage
 
-from linebot.exceptions import (
-    InvalidSignatureError
-)
-from linebot.models import (
-    MessageEvent, TextMessage, TextSendMessage,
-)
+import requests
+from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 
@@ -176,82 +169,91 @@ def getInvoice():
 
 @app.route("/callback", methods=['POST'])
 def callback():
-    global play_nums, ranums
-    signature = request.headers['X-Line-Signature']
+    global play_nums, ranums  # Use the global keyword
 
-    # get request body as text
-    body = request.get_data(as_text=True)
-    app.logger.info("Request body: " + body)
+    if request.method == 'POST':
+        signature = request.META['HTTP_X_LINE_SIGNATURE']
+        body = request.body.decode('utf-8')
 
-    # parse webhook body
-    try:
-        events = parser.parse(body, signature)
-    except InvalidSignatureError:
-        abort(400)
+        try:
+            events = parser.parse(body, signature)
+        except InvalidSignatureError:
+            return abort(400)
+        except LineBotApiError:
+            return abort(400)
 
-    # if event is MessageEvent and message is TextMessage, then echo text
-    for event in events:
+        for event in events:
             # 若有訊息事件
-        if isinstance(event, MessageEvent):
-            msg = event.message.text
+            if isinstance(event, MessageEvent):
+                msg = event.message.text
                 # 回傳收到的文字訊息
-            if msg == "猜數字":
-                returned_message = number_guessing_game.start_game()
-                line_bot_api.reply_message(event.reply_token, returned_message)
+                if msg == "猜數字":
+                    returned_message = number_guessing_game.start_game()
+                    line_bot_api.reply_message(event.reply_token, returned_message)
 
-            elif number_guessing_game.playing and msg.isdigit():
-                returned_message = number_guessing_game.guess(msg)
-                line_bot_api.reply_message(event.reply_token, returned_message)
+                elif number_guessing_game.playing and msg.isdigit():
+                    returned_message = number_guessing_game.guess(msg)
+                    line_bot_api.reply_message(event.reply_token, returned_message)
 
-            elif msg == "猜單字":
-                returned_message = word_guessing_game.start_game()
-                line_bot_api.reply_message(event.reply_token, returned_message)
+                elif msg == "猜單字":
+                    returned_message = word_guessing_game.start_game()
+                    line_bot_api.reply_message(event.reply_token, returned_message)
 
-            elif word_guessing_game.playing and msg.isalpha():
-                returned_message = word_guessing_game.guess(msg.lower())
-                line_bot_api.reply_message(event.reply_token, returned_message)
+                elif word_guessing_game.playing and msg.isalpha():
+                    returned_message = word_guessing_game.guess(msg.lower())
+                    line_bot_api.reply_message(event.reply_token, returned_message)
 
-            elif msg == "統一發票" or msg == "發票":
-                Invoice = getInvoice()
-                line_bot_api.reply_message(
-                    event.reply_token,
-                    TextSendMessage(text=Invoice))
+                elif msg == "統一發票" or msg == "發票":
+                    Invoice = getInvoice()
+                    line_bot_api.reply_message(
+                        event.reply_token,
+                        TextSendMessage(text=Invoice))
 
-            elif msg == "油價":
-                GasolinePrice = getGasolinePrice()
-                line_bot_api.reply_message(
-                    event.reply_token,
-                    TextSendMessage(text=GasolinePrice))
+                elif msg == "油價":
+                    GasolinePrice = getGasolinePrice()
+                    line_bot_api.reply_message(
+                        event.reply_token,
+                        TextSendMessage(text=GasolinePrice))
                         
-            elif msg == "新聞":
-                News = getNews()
-                line_bot_api.reply_message(
-                    event.reply_token,
-                    TextSendMessage(text=News))
+                elif msg == "新聞":
+                    News = getNews()
+                    line_bot_api.reply_message(
+                        event.reply_token,
+                        TextSendMessage(text=News))
 
-            elif msg == "軍事":
-                News2 = getNews2()
-                line_bot_api.reply_message(
-                    event.reply_token,
-                    TextSendMessage(text=News2))
+                elif msg == "軍事":
+                    News2 = getNews2()
+                    line_bot_api.reply_message(
+                        event.reply_token,
+                        TextSendMessage(text=News2))
 
-            elif msg == "喵喵":
-                line_bot_api.reply_message(
-                    event.reply_token,
-                    StickerSendMessage(package_id=1, sticker_id=2))
+                elif msg == "喵喵":
+                    line_bot_api.reply_message(
+                        event.reply_token,
+                        StickerSendMessage(package_id=1, sticker_id=2))
 
-            elif msg == "林襄":
-                image_urls = [
-                    'https://s.yimg.com/ny/api/res/1.2/qGUq9eZftFfkgDwA6J8mcQ--/YXBwaWQ9aGlnaGxhbmRlcjt3PTk2MDtoPTE0NDA7Y2Y9d2VicA--/https://media.zenfs.com/ko/news_tvbs_com_tw_938/0b727f92c662723bd9941fcaac52b5bd',
-                    'https://attach.setn.com/newsimages/2022/09/01/3805758-PH.jpg',
-                    'https://images.chinatimes.com/newsphoto/2023-11-03/1024/20231103003058.jpg',
-                    'https://s.yimg.com/ny/api/res/1.2/H_z17aILl883n2Nz5cxrTA--/YXBwaWQ9aGlnaGxhbmRlcjt3PTY0MDtoPTgwMQ--/https://media.zenfs.com/zh-tw/setn.com.tw/3ef844aae990f868d9e0fadf19ee72fe',
-                    'https://obs.line-scdn.net/0hMr3CcEnQEl0OOgaykLhtCjZsHiw9XAhULAxcaSw7Hj8hFlZYYQxBPi5uSHFwXgIMLgsObCpqH20gCQULMw/w1200',
-                ]
-                selected_image_url = random.choice(image_urls)
-    return 'OK'
+                elif msg == "林襄":
+                    image_urls = [
+                        'https://s.yimg.com/ny/api/res/1.2/qGUq9eZftFfkgDwA6J8mcQ--/YXBwaWQ9aGlnaGxhbmRlcjt3PTk2MDtoPTE0NDA7Y2Y9d2VicA--/https://media.zenfs.com/ko/news_tvbs_com_tw_938/0b727f92c662723bd9941fcaac52b5bd',
+                        'https://attach.setn.com/newsimages/2022/09/01/3805758-PH.jpg',
+                        'https://images.chinatimes.com/newsphoto/2023-11-03/1024/20231103003058.jpg',
+                        'https://s.yimg.com/ny/api/res/1.2/H_z17aILl883n2Nz5cxrTA--/YXBwaWQ9aGlnaGxhbmRlcjt3PTY0MDtoPTgwMQ--/https://media.zenfs.com/zh-tw/setn.com.tw/3ef844aae990f868d9e0fadf19ee72fe',
+                        'https://obs.line-scdn.net/0hMr3CcEnQEl0OOgaykLhtCjZsHiw9XAhULAxcaSw7Hj8hFlZYYQxBPi5uSHFwXgIMLgsObCpqH20gCQULMw/w1200',
+                    ]
+                    selected_image_url = random.choice(image_urls)
 
+                    line_bot_api.reply_message(
+                        event.reply_token,
+                        ImageSendMessage(original_content_url=selected_image_url,
+                        preview_image_url=selected_image_url))
+                else:
+                    line_bot_api.reply_message(
+                        event.reply_token,
+                        TextSendMessage(text=msg))
 
+        return 'OK'
+    else:
+        return abort(400)
 
 
 if __name__ == "__main__":

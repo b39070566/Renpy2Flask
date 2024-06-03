@@ -172,8 +172,8 @@ def callback():
     global play_nums, ranums  # Use the global keyword
 
     if request.method == 'POST':
-        signature = request.META['HTTP_X_LINE_SIGNATURE']
-        body = request.body.decode('utf-8')
+        signature = request.headers['X-Line-Signature']
+        body = request.get_data(as_text=True)
 
         try:
             events = parser.parse(body, signature)
@@ -181,6 +181,7 @@ def callback():
             return abort(400)
         except LineBotApiError:
             return abort(400)
+
 
         for event in events:
             # 若有訊息事件

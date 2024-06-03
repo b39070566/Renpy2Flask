@@ -8,9 +8,9 @@ services:
   plan: free
   autoDeploy: false
   envVars:
-  - key: VWVRg2GUNRgQRTKGObkuztHaZEvyAhWgVI+jZ868VDHak+G7VVOa+EpqstNVAkf2J4EU4hJXMEhVCuXrgtmdvLB9/f55qPF96WxwMwnaT2473OlfgxPgZ+3B6WtIEreTmM1JT+DtfNVPQJK1C73dPAdB04t89/1O/w1cDnyilFU=
+  - key: LINE_CHANNEL_ACCESS_TOKEN
     sync: false
-  - key: f117a145bb05e27999984cbc70286d91
+  - key: LINE_CHANNEL_SECRET
     sync: false
 # - type: web
 #   name: line-bot-python-flask-with-handler
